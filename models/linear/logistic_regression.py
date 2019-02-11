@@ -1,14 +1,15 @@
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_iris
 from models.model import model
 import autograd.numpy as np
 from sklearn.model_selection import train_test_split
-from loss.MeanSquareError import MeanSquareError
+from loss.CrossEntropyLoss import CrossEntropyLoss
 from optimizer.SGD import SGD
 import sys
-class LinearRegression(model):
+import random
+class LogisticRegression(model):
 
     def __init__(self, loss, optimizer, num_iterations=30, early_stopping=True, batch_size=16, learning_rate_decay = 10):
-        super(LinearRegression, self).__init__()
+        super(LogisticRegression, self).__init__()
         self.loss = loss
         self.num_iterations = num_iterations
         self.early_stopping = early_stopping
@@ -16,9 +17,11 @@ class LinearRegression(model):
         self.optimizer = optimizer
         self.learning_rate_decay = learning_rate_decay
 
+    def sigmoid(self, x):
+        return 1 / (1+np.exp(-x))
+
     def fit(self, weights, x):
-        """ linear regression function """
-        return np.dot(x, weights.T)
+        return self.sigmoid(np.dot(x, weights.T))
 
     def train(self, x, y):
         """
@@ -29,14 +32,13 @@ class LinearRegression(model):
         """
         self.x_avg = np.average(x, axis=0)
         self.x_std = np.std(x, axis=0)
-        self.y_avg = np.average(y)
-        self.y_std = np.std(y)
-
         x = (x - self.x_avg) / self.x_std
-        y = (y - self.y_avg) / self.y_std
-
         x = np.insert(x, 0, values=1, axis=1)
-        y = y.reshape((1,-1))[0]
+
+        # num_classes = np.max(y)
+        y = np.array(y).reshape(-1)
+        # y = np.eye(num_classes)[y]
+
         self.w = np.random.rand(1,len(x[0]))
 
         # register optimizer
@@ -62,7 +64,7 @@ class LinearRegression(model):
                 y_batch = y[j_batch*self.batch_size : end]
                 self.w = self.optimizer.step(self.w, x_batch, y_batch)
 
-            y_ = self.fit(self.w, x)
+            y_ = self.fit(self.w, x).reshape(-1)
             err = self.loss.errors(y, y_)
             print('Epoch {} err={}'.format(i, err))
             if err < best_err - 0.05:
@@ -75,16 +77,23 @@ class LinearRegression(model):
     def predict(self, x):
         x = (x - self.x_avg) / self.x_std
         x = np.insert(x, 0, values=1, axis=1)
-        return (self.fit(self.w, x) * self.y_std) + self.y_avg
+        return np.around(self.fit(self.w, x), 0).astype(int).reshape(-1)
 
 if __name__ == '__main__':
     """ test code """
-    data, label = load_boston(True)
-    X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.2, random_state = 42)
-    loss = MeanSquareError()
-    optimizer = SGD(learning_rate=0.1)
-    lr = LinearRegression(loss=loss, optimizer=optimizer, batch_size=16, num_iterations=100)
-    lr.train(X_train, y_train)
-    y_ = lr.predict(X_test)
-    print(np.mean(abs(y_ - y_test)))
+    data, label = load_iris(True)
+    data = data[label != 2]
+    label = label[label != 2]
+    acc = 0
+    for _ in range(10):
+        X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.1, random_state = random.randint(0,50))
+        loss = CrossEntropyLoss()
+        optimizer = SGD(learning_rate=0.01)
+        lr = LogisticRegression(loss=loss, optimizer=optimizer, batch_size=4, num_iterations=100)
+        lr.train(X_train, y_train)
+        y_ = lr.predict(X_test)
+        print(y_, y_test)
+        acc += np.sum(y_test==y_)/len(y_)
+        print(np.sum(y_test==y_)/len(y_))
+    print(acc / 10)
 

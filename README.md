@@ -16,4 +16,6 @@ sklearn(only be used to test my code) `pip install scikit-learn`
 
 - linear regression
 
+- logistic regression
+
 to be continued...

@@ -18,4 +18,6 @@ sklearn(only be used to test my code) `pip install scikit-learn`
 
 - logistic regression
 
+- softmax regression
+
 to be continued...

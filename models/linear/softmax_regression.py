@@ -6,10 +6,10 @@ from loss.CrossEntropyLoss import CrossEntropyLoss
 from optimizer.SGD import SGD
 import sys
 import random
-class LogisticRegression(model):
+class SoftMaxRegression(model):
 
     def __init__(self, loss, optimizer, num_iterations=30, early_stopping=True, batch_size=16, learning_rate_decay = 10):
-        super(LogisticRegression, self).__init__()
+        super(SoftMaxRegression, self).__init__()
         self.loss = loss
         self.num_iterations = num_iterations
         self.early_stopping = early_stopping
@@ -17,11 +17,12 @@ class LogisticRegression(model):
         self.optimizer = optimizer
         self.learning_rate_decay = learning_rate_decay
 
-    def sigmoid(self, x):
-        return 1 / (1+np.exp(-x))
+    def softmax(self, x):
+        e_x = np.maximum(np.exp(x - np.max(x, axis=1)[:, np.newaxis]), 1e-12)
+        return e_x / np.sum(e_x, axis=1)[:, np.newaxis]
 
     def fit(self, weights, x):
-        return self.sigmoid(np.dot(x, weights.T))
+        return self.softmax(np.dot(x, weights.T))
 
     def train(self, x, y):
         """
@@ -35,11 +36,11 @@ class LogisticRegression(model):
         x = (x - self.x_avg) / self.x_std
         x = np.insert(x, 0, values=1, axis=1)
 
-        # num_classes = np.max(y)
+        num_classes = np.max(y) + 1
         y = np.array(y).reshape(-1)
-        # y = np.eye(num_classes)[y]
+        y = np.eye(num_classes)[y]
 
-        self.w = np.random.rand(1,len(x[0]))
+        self.w = np.random.rand(num_classes,len(x[0]))
 
         # register optimizer
         self.optimizer.register_model(self.fit)
@@ -64,7 +65,7 @@ class LogisticRegression(model):
                 y_batch = y[j_batch*self.batch_size : end]
                 self.w = self.optimizer.step(self.w, x_batch, y_batch)
 
-            y_ = self.fit(self.w, x).reshape(-1)
+            y_ = self.fit(self.w, x)
             err = self.loss.errors(y, y_)
             print('Epoch {} err={}'.format(i, err))
             if err < best_err - 0.05:
@@ -77,23 +78,19 @@ class LogisticRegression(model):
     def predict(self, x):
         x = (x - self.x_avg) / self.x_std
         x = np.insert(x, 0, values=1, axis=1)
-        return np.around(self.fit(self.w, x), 0).astype(int).reshape(-1)
+        return np.argmax(np.around(self.fit(self.w, x), 0).astype(int), axis=1)
 
 if __name__ == '__main__':
     """ test code """
     data, label = load_iris(True)
-    data = data[label != 2]
-    label = label[label != 2]
     acc = 0
-    for _ in range(10):
+    for _ in range(1):
         X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.1, random_state = random.randint(0,50))
         loss = CrossEntropyLoss()
         optimizer = SGD(learning_rate=0.01)
-        reg = LogisticRegression(loss=loss, optimizer=optimizer, batch_size=4, num_iterations=100)
+        reg = SoftMaxRegression(loss=loss, optimizer=optimizer, batch_size=4, num_iterations=100)
         reg.train(X_train, y_train)
         y_ = reg.predict(X_test)
-        print(y_, y_test)
         acc += np.sum(y_test==y_)/len(y_)
         print(np.sum(y_test==y_)/len(y_))
-    print(acc / 10)
-
+    print(acc / 1)

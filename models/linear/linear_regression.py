@@ -83,8 +83,8 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.2, random_state = 42)
     loss = MeanSquareError()
     optimizer = SGD(learning_rate=0.1)
-    lr = LinearRegression(loss=loss, optimizer=optimizer, batch_size=16, num_iterations=100)
-    lr.train(X_train, y_train)
-    y_ = lr.predict(X_test)
+    reg = LinearRegression(loss=loss, optimizer=optimizer, batch_size=16, num_iterations=100)
+    reg.train(X_train, y_train)
+    y_ = reg.predict(X_test)
     print(np.mean(abs(y_ - y_test)))
 

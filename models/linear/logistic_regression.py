@@ -6,6 +6,8 @@ from loss.CrossEntropyLoss import CrossEntropyLoss
 from optimizer.SGD import SGD
 import sys
 import random
+from preprocessing.data import standardization as data_standardization
+
 class LogisticRegression(model):
 
     def __init__(self, loss, optimizer, num_iterations=30, early_stopping=True, batch_size=16, learning_rate_decay = 10):
@@ -30,14 +32,10 @@ class LogisticRegression(model):
         :param y:
         :return:
         """
-        self.x_avg = np.average(x, axis=0)
-        self.x_std = np.std(x, axis=0)
-        x = (x - self.x_avg) / self.x_std
-        x = np.insert(x, 0, values=1, axis=1)
+        x, self.x_avg, self.x_std = data_standardization(x)
 
-        # num_classes = np.max(y)
-        y = np.array(y).reshape(-1)
-        # y = np.eye(num_classes)[y]
+        x = np.insert(x, 0, values=1, axis=1)
+        y = y.reshape(-1)
 
         self.w = np.random.rand(1,len(x[0]))
 

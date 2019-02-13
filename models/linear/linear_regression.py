@@ -4,7 +4,10 @@ import autograd.numpy as np
 from sklearn.model_selection import train_test_split
 from loss.MeanSquareError import MeanSquareError
 from optimizer.SGD import SGD
+from optimizer.Momentum import Momentum
 import sys
+from preprocessing.data import standardization as data_standardization
+from preprocessing.label import standardization as label_standardization
 class LinearRegression(model):
 
     def __init__(self, loss, optimizer, num_iterations=30, early_stopping=True, batch_size=16, learning_rate_decay = 10):
@@ -27,13 +30,8 @@ class LinearRegression(model):
         :param y:
         :return:
         """
-        self.x_avg = np.average(x, axis=0)
-        self.x_std = np.std(x, axis=0)
-        self.y_avg = np.average(y)
-        self.y_std = np.std(y)
-
-        x = (x - self.x_avg) / self.x_std
-        y = (y - self.y_avg) / self.y_std
+        x, self.x_avg, self.x_std  = data_standardization(x)
+        y, self.y_avg, self.y_std = label_standardization(y)
 
         x = np.insert(x, 0, values=1, axis=1)
         y = y.reshape((1,-1))[0]
@@ -82,7 +80,7 @@ if __name__ == '__main__':
     data, label = load_boston(True)
     X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.2, random_state = 42)
     loss = MeanSquareError()
-    optimizer = SGD(learning_rate=0.1)
+    optimizer = Momentum(learning_rate=0.1, momentum=0.5)
     reg = LinearRegression(loss=loss, optimizer=optimizer, batch_size=16, num_iterations=100)
     reg.train(X_train, y_train)
     y_ = reg.predict(X_test)

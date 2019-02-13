@@ -1,6 +1,6 @@
-# my machine learning package
+# My machine learning package
 
-ML package for exercise and this package will implement some common algorithms without any other ml library such as sklean. This package are only allowed to study.
+ML package for exercising and this package will implement some common algorithms without any other ml libraries such as sklean. This package are only allowed to study.
 
 ----
 #### Requires
@@ -12,7 +12,7 @@ numpy `pip install numpy`
 sklearn(only be used to test my code) `pip install scikit-learn`
 
 ----
-#### current algorithms
+#### Algorithms
 
 - linear regression
 

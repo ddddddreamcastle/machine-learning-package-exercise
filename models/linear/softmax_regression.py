@@ -4,8 +4,12 @@ import autograd.numpy as np
 from sklearn.model_selection import train_test_split
 from loss.CrossEntropyLoss import CrossEntropyLoss
 from optimizer.SGD import SGD
+from optimizer.Momentum import Momentum
 import sys
 import random
+from preprocessing.data import standardization as data_standardization
+from preprocessing.label import onehot_decode_for_label
+
 class SoftMaxRegression(model):
 
     def __init__(self, loss, optimizer, num_iterations=30, early_stopping=True, batch_size=16, learning_rate_decay = 10):
@@ -31,14 +35,10 @@ class SoftMaxRegression(model):
         :param y:
         :return:
         """
-        self.x_avg = np.average(x, axis=0)
-        self.x_std = np.std(x, axis=0)
-        x = (x - self.x_avg) / self.x_std
-        x = np.insert(x, 0, values=1, axis=1)
+        x, self.x_avg, self.x_std = data_standardization(x)
 
-        num_classes = np.max(y) + 1
-        y = np.array(y).reshape(-1)
-        y = np.eye(num_classes)[y]
+        x = np.insert(x, 0, values=1, axis=1)
+        y, num_classes = onehot_decode_for_label(y)
 
         self.w = np.random.rand(num_classes,len(x[0]))
 
@@ -84,13 +84,13 @@ if __name__ == '__main__':
     """ test code """
     data, label = load_iris(True)
     acc = 0
-    for _ in range(1):
+    for _ in range(10):
         X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.1, random_state = random.randint(0,50))
         loss = CrossEntropyLoss()
-        optimizer = SGD(learning_rate=0.01)
+        optimizer = Momentum(learning_rate=0.01, momentum=0.5)
         reg = SoftMaxRegression(loss=loss, optimizer=optimizer, batch_size=4, num_iterations=100)
         reg.train(X_train, y_train)
         y_ = reg.predict(X_test)
         acc += np.sum(y_test==y_)/len(y_)
         print(np.sum(y_test==y_)/len(y_))
-    print(acc / 1)
+    print(acc / 10)

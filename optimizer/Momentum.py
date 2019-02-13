@@ -1,9 +1,12 @@
 from autograd import elementwise_grad as egrad
 from optimizer.base_optimizer import Optimizer
 
-class SGD(Optimizer):
-    def __init__(self, learning_rate):
-        super(SGD, self).__init__(learning_rate)
+class Momentum(Optimizer):
+
+    def __init__(self, learning_rate, momentum):
+        super(Momentum, self).__init__(learning_rate)
+        self.momentum = momentum
+        self.v = 0
 
     def set_learning_rate(self, learning_rate):
         self.learning_rate = learning_rate
@@ -14,5 +17,6 @@ class SGD(Optimizer):
     def step(self, parameters, input, target):
         optimizer_grad_func = egrad(self.optimizer, 0)
         parameters_gard = optimizer_grad_func(parameters, input, target)
-        parameters = parameters - self.learning_rate * parameters_gard
+        self.v = self.momentum * self.v + self.learning_rate * parameters_gard
+        parameters = parameters - self.v
         return parameters

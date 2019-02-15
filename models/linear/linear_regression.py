@@ -4,6 +4,7 @@ import autograd.numpy as np
 from sklearn.model_selection import train_test_split
 from loss.MeanSquareError import MeanSquareError
 from optimizer.SGD import SGD
+from optimizer.NAG import NAG
 from optimizer.Momentum import Momentum
 import sys
 from preprocessing.data import standardization as data_standardization
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     data, label = load_boston(True)
     X_train, X_test, y_train, y_test = train_test_split(data, label, test_size = 0.2, random_state = 42)
     loss = MeanSquareError()
-    optimizer = Momentum(learning_rate=0.1, momentum=0.5)
+    optimizer = NAG(learning_rate=0.1, momentum=0.5)
     reg = LinearRegression(loss=loss, optimizer=optimizer, batch_size=16, num_iterations=100)
     reg.train(X_train, y_train)
     y_ = reg.predict(X_test)

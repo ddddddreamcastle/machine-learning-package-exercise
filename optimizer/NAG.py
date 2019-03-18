@@ -17,6 +17,6 @@ class NAG(Optimizer):
     def step(self, parameters, input, target):
         optimizer_grad_func = egrad(self.optimizer, 0)
         parameters_gard = optimizer_grad_func(parameters, input + self.v, target)
-        self.v = self.momentum * self.v + self.learning_rate * parameters_gard
-        parameters = parameters - self.v
+        self.v = self.momentum * self.v - self.learning_rate * parameters_gard
+        parameters = parameters + self.v
         return parameters
